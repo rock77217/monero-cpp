@@ -143,7 +143,7 @@ int main(int argc, const char* argv[]) {
   uint64_t fee = created_tx->m_fee.get(); // "Are you sure you want to send ...?"
   wallet_restored->relay_tx(*created_tx); // submit the transaction to the Monero network which will notify the recipient wallet
 
-  // the recipient wallet will be notified
+  // wallet receives unconfirmed funds within 10 seconds
   if (OUTPUT_RECEIVED) cout << "Sample code completed successfully" << endl;
   else throw runtime_error("Output should have been received");
 }
