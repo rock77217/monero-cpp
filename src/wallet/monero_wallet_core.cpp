@@ -2175,11 +2175,12 @@ namespace monero {
     // get unsigned and multisig tx sets
     std::string unsigned_tx_hex = tx_set.m_unsigned_tx_hex == boost::none ? "" : tx_set.m_unsigned_tx_hex.get();
     std::string multisig_tx_hex = tx_set.m_multisig_tx_hex == boost::none ? "" : tx_set.m_multisig_tx_hex.get();
+    std::string signed_tx_hex = tx_set.m_signed_tx_hex == boost::none ? "" : tx_set.m_signed_tx_hex.get();
 
     // validate request
     if (m_w2->key_on_device()) throw std::runtime_error("command not supported by HW wallet");
     if (m_w2->watch_only()) throw std::runtime_error("command not supported by view-only wallet");
-    if (unsigned_tx_hex.empty() && multisig_tx_hex.empty()) throw std::runtime_error("no txset provided");
+    if (unsigned_tx_hex.empty() && multisig_tx_hex.empty() && signed_tx_hex.empty()) throw std::runtime_error("no txset provided");
 
     std::vector <wallet2::tx_construction_data> tx_constructions;
     if (!unsigned_tx_hex.empty()) {
@@ -2205,6 +2206,19 @@ namespace monero {
       }
       catch (const std::exception &e) {
         throw std::runtime_error("failed to parse multisig transfers: " + std::string(e.what()));
+      }
+    } else if (!signed_tx_hex.empty()) {
+      try {
+        std::vector<tools::wallet2::pending_tx> ptx_vector;
+        cryptonote::blobdata blob;
+        if (!epee::string_tools::parse_hexstr_to_binbuff(signed_tx_hex, blob)) throw std::runtime_error("Failed to parse hex.");
+        if (!m_w2->parse_tx_from_str(blob, ptx_vector)) throw std::runtime_error("Failed to parse signed tx data.");
+        for (size_t n = 0; n < ptx_vector.size(); ++n) {
+          tx_constructions.push_back(ptx_vector[n].construction_data);
+        }
+      }
+      catch (const std::exception &e) {
+        throw std::runtime_error("failed to parse signed transfers: " + std::string(e.what()));
       }
     }
 
